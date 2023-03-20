@@ -9,6 +9,7 @@ import com.example.demo.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private UserService userService;
-
     private TokenProvider tokenProvider;
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/signup") // 회원가입
     public ResponseEntity<?> registerUser(@RequestBody UserDTO userDTO){
@@ -33,10 +34,9 @@ public class UserController {
             }
 
             // 요청을 이용해 저장할 유저 만들기
-
             UserEntity user = UserEntity.builder()
                     .userName(userDTO.getUserName())
-                    .password(userDTO.getPassword())
+                    .password(passwordEncoder.encode(userDTO.getPassword())) // Encoding 유저 생성
                     .build();
 
             //서비스를 이용해 레포에 유저 저장 
@@ -47,7 +47,6 @@ public class UserController {
                     .id(registeredUser.getId())
                     .userName(registeredUser.getUserName())
                     .build();
-
 
 
             return ResponseEntity.ok().body(responseUserDTO);
@@ -69,7 +68,8 @@ public class UserController {
 
         UserEntity user = userService.getByCredentials(
                 userDTO.getUserName(),
-                userDTO.getPassword()
+                userDTO.getPassword(),
+                passwordEncoder
         );
 
         if(user != null ){
